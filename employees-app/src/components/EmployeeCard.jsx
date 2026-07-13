@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useFavorites } from '../context/FavoritesContext.jsx';
 
-export default function EmployeeCard({ employee, showMoreInfo = true }) {
+export default function EmployeeCard({ employee, company = 'google', showMoreInfo = true }) {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const id = employee.login.uuid;
   const favorite = isFavorite(id);
@@ -15,7 +15,7 @@ export default function EmployeeCard({ employee, showMoreInfo = true }) {
       <p>{employee.location.city}, {employee.location.country}</p>
       <div className="card-actions">
         {showMoreInfo && (
-          <Link className="btn" to={`/employee/${id}`}>More Info</Link>
+          <Link className="btn" to={`/employee/${id}?company=${encodeURIComponent(company)}`}>More Info</Link>
         )}
         {favorite ? (
           <button className="btn btn-remove" onClick={() => removeFavorite(id)}>Remove Favorite</button>
