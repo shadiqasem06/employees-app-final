@@ -1,7 +1,14 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'favoriteEmployees';
-const FavoritesContext = createContext(null);
+
+// The global store: createContext holds ALL the global variables and functions
+const FavoritesContext = createContext({
+  favorites: [],
+  isFavorite: (id) => false,
+  addFavorite: (employee) => {},
+  removeFavorite: (id) => {},
+});
 
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState(() => {
