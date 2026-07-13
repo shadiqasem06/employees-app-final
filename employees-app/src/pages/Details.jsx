@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { fetchEmployeeById } from '../services/api.js';
@@ -15,6 +15,8 @@ const markerIcon = L.icon({
 
 export default function Details() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const company = searchParams.get('company') || 'google';
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,14 +25,14 @@ export default function Details() {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
   useEffect(() => {
-    fetchEmployeeById(id)
+    fetchEmployeeById(id, company)
       .then((emp) => {
         if (!emp) setError('Employee not found.');
         else setEmployee(emp);
       })
       .catch(() => setError('Failed to load employee details.'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, company]);
 
   useEffect(() => {
     if (!employee || !mapRef.current || mapInstance.current) return;

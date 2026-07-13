@@ -1,44 +1,66 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { fetchEmployees } from '../services/api.js';
 import EmployeeCard from '../components/EmployeeCard.jsx';
 
 export default function Home() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const company = searchParams.get('company') || 'google';
   const [employees, setEmployees] = useState([]);
-  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // The search runs on the API itself (seed=company) whenever the
+  // "company" query param in the URL changes.
   useEffect(() => {
-    fetchEmployees()
-      .then(setEmployees)
-      .catch(() => setError('Failed to load employees. Please try again later.'))
-      .finally(() => setLoading(false));
-  }, []);
+    let active = true;
+    setLoading(true);
+    setError(null);
+    fetchEmployees(company)
+      .then((list) => {
+        if (active) setEmployees(list);
+      })
+      .catch(() => {
+        if (active) setError('Failed to load employees. Please try again later.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [company]);
 
-  const filtered = employees.filter((e) =>
-    `${e.name.first} ${e.name.last}`.toLowerCase().includes(search.toLowerCase())
-  );
-
-  if (loading) return <p className="status">Loading...</p>;
-  if (error) return <p className="status error">{error}</p>;
+  // Typing a company name updates the URL query param, which triggers a new API search
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchParams(value ? { company: value } : {});
+  };
 
   return (
     <div>
       <input
         type="text"
         className="search"
-        placeholder="Search employee by name..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search employees by company name (default: google)..."
+        value={searchParams.get('company') || ''}
+        onChange={handleSearch}
       />
-      {filtered.length === 0 ? (
+      {loading ? (
+        <p className="status">Loading...</p>
+      ) : error ? (
+        <p className="status error">{error}</p>
+      ) : employees.length === 0 ? (
         <p className="status">No employees found.</p>
       ) : (
-        <div className="grid">
-          {filtered.map((employee) => (
-            <EmployeeCard key={employee.login.uuid} employee={employee} />
-          ))}
-        </div>
+        <>
+          <h2>Employees of {company}</h2>
+          <div className="grid">
+            {employees.map((employee) => (
+              <EmployeeCard key={employee.login.uuid} employee={employee} company={company} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
